@@ -137,7 +137,7 @@
           data = await fetchFollows(username, hashes);
         } else {
           // Hole User-ID vom Backend
-          const userRes = await fetch(`${API_BASE}/api/userid`, {
+          const userRes = await fetch(`${API_BASE}/api/userId`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ login: username })
@@ -255,4 +255,5 @@
 </html>
 </body>
 </html>
+
 

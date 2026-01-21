@@ -136,19 +136,18 @@
         if (window.currentTool === 'follows') {
           data = await fetchFollows(username, hashes);
         } else {
-          } else {
-  // Hole User-ID vom Backend
-  const userRes = await fetch(`${API_BASE}/api/userid`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ login: username })
-  });
-  if (!userRes.ok) throw new Error(`User-ID Fehler: ${userRes.status} - ${userRes.statusText}`);
-  const userData = await userRes.json();
-  if (!userData.userId) throw new Error('User nicht gefunden');
+          // Hole User-ID vom Backend
+          const userRes = await fetch(`${API_BASE}/api/userid`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ login: username })
+          });
+          if (!userRes.ok) throw new Error(`User-ID Fehler: ${userRes.status} - ${userRes.statusText}`);
+          const userData = await userRes.json();
+          if (!userData.userId) throw new Error('User nicht gefunden');
 
-  data = await fetchList(window.currentTool, userData.userId, hashes);
-}
+          data = await fetchList(window.currentTool, userData.userId, hashes);
+        }
 
         renderResults(data);
       } catch (err) {
@@ -254,8 +253,3 @@
   </script>
 </body>
 </html>
-</body>
-</html>
-
-
-

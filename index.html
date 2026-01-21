@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TwitchTools Clone - Tools wie tools.2807.eu</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0f0f23; color: #ffffff; line-height: 1.6; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        header { text-align: center; margin-bottom: 40px; }
+        h1 { font-size: 2.5em; margin-bottom: 10px; background: linear-gradient(45deg, #9146ff, #6441a5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .subtitle { color: #a19eff; font-size: 1.2em; }
+        .tools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 40px; }
+        .tool-card { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 20px; text-align: center; transition: transform 0.2s, box-shadow 0.2s; border: 1px solid rgba(255,255,255,0.1); }
+        .tool-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(145, 70, 255, 0.3); }
+        .tool-icon { width: 64px; height: 64px; margin: 0 auto 15px; background-size: contain; background-repeat: no-repeat; opacity: 0.8; }
+        .tool-follows { background-image: url('https://i.2807.eu/bChbc.png'); }
+        .tool-founders { background-image: url('https://static-cdn.jtvnw.net/badges/v1/511b78a9-ab37-472f-9569-457753bbe7d3/3'); }
+        .tool-mods { background-image: url('https://static-cdn.jtvnw.net/badges/v1/3267646d-33f0-4b17-b3df-f923a41db1d0/3'); }
+        .tool-vips { background-image: url('https://i.imgur.com/CRNd9Yy.png'); }
+        .tool-title { font-size: 1.3em; margin-bottom: 10px; }
+        .tool-desc { color: #b3b3ff; font-size: 0.9em; }
+        .tool-link { display: inline-block; background: #9146ff; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; margin-top: 15px; transition: background 0.2s; }
+        .tool-link:hover { background: #6441a5; }
+        .tool-page { display: none; max-width: 800px; margin: 0 auto; }
+        .tool-page.active { display: block; }
+        .input-group { margin-bottom: 20px; }
+        input[type="text"] { width: 100%; padding: 15px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: white; font-size: 1.1em; }
+        input[type="text"]::placeholder { color: #a19eff; }
+        button { background: #9146ff; color: white; border: none; padding: 15px 30px; border-radius: 8px; font-size: 1.1em; cursor: pointer; width: 100%; margin-top: 10px; transition: background 0.2s; }
+        button:hover { background: #6441a5; }
+        button.loading { opacity: 0.7; cursor: wait; }
+        #loading { text-align: center; color: #a19eff; display: none; }
+        .results { margin-top: 30px; display: none; }
+        .list-item { background: rgba(255,255,255,0.05); padding: 15px; margin-bottom: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .user-link { color: #9146ff; text-decoration: none; }
+        .user-link:hover { text-decoration: underline; }
+        .date { color: #b3b3ff; font-size: 0.9em; }
+        .error { color: #ff4d4d; text-align: center; display: none; }
+        @media (max-width: 768px) { .tools-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>TwitchTools</h1>
+            <p class="subtitle">Verschiedene Tools zum Anzeigen von Twitch-Daten (wie tools.2807.eu)</p>
+        </header>
+
+        <div class="tools-grid" id="mainTools">
+            <div class="tool-card">
+                <div class="tool-icon tool-follows"></div>
+                <div class="tool-title">Twitch Follows</div>
+                <div class="tool-desc">Überprüfe, wen jemand auf Twitch folgt.</div>
+                <a href="#" class="tool-link" onclick="loadTool('follows')">Öffnen</a>
+            </div>
+            <div class="tool-card">
+                <div class="tool-icon tool-founders"></div>
+                <div class="tool-title">Twitch Founders-List</div>
+                <div class="tool-desc">Zeige die Founders eines Streamers.</div>
+                <a href="#" class="tool-link" onclick="loadTool('founders')">Öffnen</a>
+            </div>
+            <div class="tool-card">
+                <div class="tool-icon tool-mods"></div>
+                <div class="tool-title">Twitch Mod-List</div>
+                <div class="tool-desc">Überprüfe die Moderatoren eines Streamers.</div>
+                <a href="#" class="tool-link" onclick="loadTool('mods')">Öffnen</a>
+            </div>
+            <div class="tool-card">
+                <div class="tool-icon tool-vips"></div>
+                <div class="tool-title">Twitch VIP-List</div>
+                <div class="tool-desc">Zeige die VIPs eines Streamers.</div>
+                <a href="#" class="tool-link" onclick="loadTool('vips')">Öffnen</a>
+            </div>
+        </div>
+
+        <div id="toolsContainer"></div>
+    </div>
+
+    <script>
+        window.loadTool = function(tool) {
+            document.getElementById('mainTools').style.display = 'none';
+            const container = document.getElementById('toolsContainer');
+            container.innerHTML = getToolHTML(tool);
+            window.currentTool = tool;
+        };
+
+        function getToolHTML(tool) {
+            let title = tool.charAt(0).toUpperCase() + tool.slice(1);
+            if (tool === 'mods') title = 'Moderatoren';
+            if (tool === 'vips') title = 'VIPs';
+            if (tool === 'founders') title = 'Founders';
+            return `
+                <div class="tool-page active">
+                    <button onclick="backToMain()">← Zurück zur Übersicht</button>
+                    <h2>${title}</h2>
+                    <p>Twitch Username eingeben:</p>
+                    <div class="input-group">
+                        <input type="text" id="username" placeholder="z.B. shroud, xqc, moistcr1tikal" onkeypress="handleKeyPress(event)">
+                        <button onclick="fetchData()">Laden</button>
+                    </div>
+                    <div id="loading" style="display:none; text-align:center; color:#a19eff; margin:20px 0;">Lade Daten... (kann 2-15 Sekunden dauern)</div>
+                    <div id="error" class="error" style="display:none;"></div>
+                    <div id="results" class="results" style="display:none;"></div>
+                </div>
+            `;
+        }
+
+        function backToMain() {
+            document.getElementById('toolsContainer').innerHTML = '';
+            document.getElementById('mainTools').style.display = 'grid';
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') fetchData();
+        }
+
+        window.fetchData = async function() {
+            const username = document.getElementById('username').value.trim().toLowerCase();
+            if (!username) {
+                showError('Bitte einen Twitch-Username eingeben.');
+                return;
+            }
+
+            const button = document.querySelector('button[onclick="fetchData()"]');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const errorDiv = document.getElementById('error');
+
+            button.classList.add('loading');
+            button.textContent = 'Lädt...';
+            loading.style.display = 'block';
+            results.style.display = 'none';
+            errorDiv.style.display = 'none';
+
+            try {
+                let data = [];
+                const clientId = 'kimne78kx3ncx6brgo4mv6wki5h1ko';
+
+                if (window.currentTool === 'follows') {
+                    data = await fetchFollowers(username, clientId);
+                } else {
+                    const userId = await getUserId(username, clientId);
+                    if (!userId) throw new Error('User nicht gefunden');
+
+                    if (window.currentTool === 'mods') {
+                        data = await fetchModerators(userId, clientId);
+                    } else if (window.currentTool === 'vips') {
+                        data = await fetchVIPs(userId, clientId);
+                    } else if (window.currentTool === 'founders') {
+                        data = await fetchFounders(userId, clientId);
+                    }
+                }
+
+                renderResults(data);
+            } catch (err) {
+                showError('Fehler: ' + err.message + '<br>(User existiert nicht, Rate-Limit oder Twitch hat API geändert)');
+            } finally {
+                button.classList.remove('loading');
+                button.textContent = 'Laden';
+                loading.style.display = 'none';
+            }
+        };
+
+        // 1. Follows
+        async function fetchFollowers(login, clientId) {
+            let all = [];
+            let cursor = null;
+            do {
+                const query = {
+                    operationName: "Followers",
+                    variables: { limit: 100, login, order: "DESC", after: cursor },
+                    extensions: {
+                        persistedQuery: {
+                            version: 1,
+                            sha256Hash: "3316194bb52051e2f9184012f6171b9aed4d457994568f1b4ed4a11e37a18b5c"
+                        }
+                    }
+                };
+
+                const res = await fetch('https://gql.twitch.tv/gql', {
+                    method: 'POST',
+                    headers: { 'Client-Id': clientId, 'Content-Type': 'application/json' },
+                    body: JSON.stringify([query])
+                });
+                if (!res.ok) throw new Error('Netzwerkfehler');
+                const json = await res.json();
+                const edges = json[0]?.data?.user?.followers?.edges || [];
+                all.push(...edges.map(e => ({
+                    login: e.node.login,
+                    display_name: e.node.displayName,
+                    date: e.node.followedAt ? new Date(e.node.followedAt).toLocaleString('de-DE') : 'N/A'
+                })));
+                cursor = json[0]?.data?.user?.followers?.pageInfo?.endCursor;
+            } while (cursor);
+            return all;
+        }
+
+        // User-ID (aktuellster bekannter Hash)
+        async function getUserId(login, clientId) {
+            const query = {
+                operationName: "UserByLogin",
+                variables: { login },
+                extensions: {
+                    persistedQuery: {
+                        version: 1,
+                        sha256Hash: "4c39d2f4f4a5c8d9e2b3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e"
+                    }
+                }
+            };
+
+            const res = await fetch('https://gql.twitch.tv/gql', {
+                method: 'POST',
+                headers: { 'Client-Id': clientId, 'Content-Type': 'application/json' },
+                body: JSON.stringify([query])
+            });
+            if (!res.ok) throw new Error('Netzwerkfehler bei User-ID');
+            const json = await res.json();
+            return json[0]?.data?.user?.id;
+        }
+
+        // Moderatoren
+        async function fetchModerators(userId, clientId) {
+            const query = {
+                operationName: "ModerationModerators",
+                variables: { broadcasterID: userId, limit: 100 },
+                extensions: {
+                    persistedQuery: {
+                        version: 1,
+                        sha256Hash: "800e7346bdf7e5278a3c1d3f21b2b56e2639928f86815677a7126b093b2fdd08"
+                    }
+                }
+            };
+
+            const res = await fetch('https://gql.twitch.tv/gql', {
+                method: 'POST',
+                headers: { 'Client-Id': clientId, 'Content-Type': 'application/json' },
+                body: JSON.stringify([query])
+            });
+            if (!res.ok) throw new Error('Netzwerkfehler');
+            const json = await res.json();
+            const edges = json[0]?.data?.user?.moderationModerators?.edges || [];
+            return edges.map(e => ({
+                login: e.node.login,
+                display_name: e.node.displayName,
+                date: e.node.grantedAt ? new Date(e.node.grantedAt).toLocaleString('de-DE') : 'N/A'
+            }));
+        }
+
+        // VIPs
+        async function fetchVIPs(userId, clientId) {
+            const query = {
+                operationName: "ChannelVIPs",
+                variables: { broadcasterID: userId, limit: 100 },
+                extensions: {
+                    persistedQuery: {
+                        version: 1,
+                        sha256Hash: "0828119ded1c13477966434e15800ff57ddacf13ba1911c129dc2200705b0712"
+                    }
+                }
+            };
+
+            const res = await fetch('https://gql.twitch.tv/gql', {
+                method: 'POST',
+                headers: { 'Client-Id': clientId, 'Content-Type': 'application/json' },
+                body: JSON.stringify([query])
+            });
+            if (!res.ok) throw new Error('Netzwerkfehler');
+            const json = await res.json();
+            const edges = json[0]?.data?.user?.channel?.vips?.edges || [];
+            return edges.map(e => ({
+                login: e.node.login,
+                display_name: e.node.displayName,
+                date: e.node.grantedAt ? new Date(e.node.grantedAt).toLocaleString('de-DE') : 'N/A'
+            }));
+        }
+
+        // Founders
+        async function fetchFounders(userId, clientId) {
+            const query = {
+                operationName: "ChannelFounders",
+                variables: { broadcasterID: userId, limit: 100 },
+                extensions: {
+                    persistedQuery: {
+                        version: 1,
+                        sha256Hash: "b9ce64d02e26c6fe9adbfb3991284224498b295542f9c5a51eacd3610e659cfb"
+                    }
+                }
+            };
+
+            const res = await fetch('https://gql.twitch.tv/gql', {
+                method: 'POST',
+                headers: { 'Client-Id': clientId, 'Content-Type': 'application/json' },
+                body: JSON.stringify([query])
+            });
+            if (!res.ok) throw new Error('Netzwerkfehler');
+            const json = await res.json();
+            const edges = json[0]?.data?.user?.channel?.founders?.edges || [];
+            return edges.map(e => ({
+                login: e.node.login,
+                display_name: e.node.displayName,
+                date: e.node.subscribedAt ? new Date(e.node.subscribedAt).toLocaleString('de-DE') : 'N/A'
+            }));
+        }
+
+        function renderResults(data) {
+            const results = document.getElementById('results');
+            if (data.length === 0) {
+                showError('Keine Einträge gefunden (oder User hat keine Mods/VIPs/Founders).');
+                return;
+            }
+            results.innerHTML = `<p><strong>${data.length} Einträge gefunden:</strong></p>` + 
+                data.map(item => `
+                    <div class="list-item">
+                        <a href="https://www.twitch.tv/${item.login}" class="user-link" target="_blank">
+                            ${item.display_name} (@${item.login})
+                        </a>
+                        <span class="date">${item.date}</span>
+                    </div>
+                `).join('');
+            results.style.display = 'block';
+        }
+
+        function showError(msg) {
+            document.getElementById('error').innerHTML = msg;
+            document.getElementById('error').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

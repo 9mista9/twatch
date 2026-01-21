@@ -3,10 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TwitchTools</title>
+  <title>TwitchTools – Besser als tools.2807.eu</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    tailwind.config = { darkMode: 'class', theme: { extend: { colors: { twitch: { purple: '#9146FF', dark: '#0F0F23', darker: '#0A0A1A' } } } } }
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            twitch: {
+              purple: '#9146FF',
+              dark: '#0F0F23',
+              darker: '#0A0A1A',
+            }
+          }
+        }
+      }
+    }
   </script>
 </head>
 <body class="bg-twitch-darker text-white min-h-screen">
@@ -14,37 +27,44 @@
     <header class="text-center mb-12">
       <h1 class="text-5xl font-bold bg-gradient-to-r from-twitch-purple to-purple-600 bg-clip-text text-transparent">TwitchTools</h1>
       <p class="text-xl text-purple-300 mt-2">Mit Profilbildern, Suchfeld & Dark Mode</p>
+
+      <button id="theme-toggle" class="mt-4 px-6 py-3 bg-twitch-purple rounded-xl hover:bg-purple-800 transition">
+        Light Mode
+      </button>
     </header>
 
     <div id="mainTools" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
       <div class="bg-twitch-dark p-8 rounded-2xl shadow-xl hover:shadow-purple-500/40 transition cursor-pointer" onclick="loadTool('follows')">
         <div class="text-6xl mb-4">👥</div>
         <h2 class="text-2xl font-bold mb-2">Follows</h2>
-        <p class="text-purple-300">Wer folgt wem</p>
+        <p class="text-purple-300">Wer folgt wem – mit Datum & Profilbild</p>
       </div>
       <div class="bg-twitch-dark p-8 rounded-2xl shadow-xl hover:shadow-purple-500/40 transition cursor-pointer" onclick="loadTool('mods')">
         <div class="text-6xl mb-4">🛡️</div>
         <h2 class="text-2xl font-bold mb-2">Moderatoren</h2>
-        <p class="text-purple-300">Mod-Liste</p>
+        <p class="text-purple-300">Mod-Liste mit seit wann</p>
       </div>
       <div class="bg-twitch-dark p-8 rounded-2xl shadow-xl hover:shadow-purple-500/40 transition cursor-pointer" onclick="loadTool('vips')">
         <div class="text-6xl mb-4">⭐</div>
         <h2 class="text-2xl font-bold mb-2">VIPs</h2>
-        <p class="text-purple-300">VIP-Liste</p>
+        <p class="text-purple-300">VIP-Liste mit seit wann</p>
       </div>
       <div class="bg-twitch-dark p-8 rounded-2xl shadow-xl hover:shadow-purple-500/40 transition cursor-pointer" onclick="loadTool('founders')">
         <div class="text-6xl mb-4">👑</div>
         <h2 class="text-2xl font-bold mb-2">Founders</h2>
-        <p class="text-purple-300">Founders-Liste</p>
+        <p class="text-purple-300">Gründungs-Mitglieder mit Datum</p>
       </div>
     </div>
 
     <div id="toolPage" class="hidden">
-      <button onclick="backToMain()" class="mb-8 px-6 py-3 bg-twitch-purple rounded-xl hover:bg-purple-700 transition">← Zurück</button>
+      <button onclick="backToMain()" class="mb-8 px-6 py-3 bg-twitch-purple rounded-xl hover:bg-purple-700 transition">
+        ← Zurück zur Übersicht
+      </button>
+
       <h2 id="toolTitle" class="text-4xl font-bold mb-8"></h2>
 
       <div class="flex flex-col lg:flex-row gap-4 mb-8">
-        <input id="usernameInput" type="text" placeholder="z.B. shroud" class="flex-1 px-6 py-4 bg-twitch-darker border border-purple-600 rounded-xl focus:outline-none focus:border-twitch-purple text-lg">
+        <input id="usernameInput" type="text" placeholder="z.B. shroud oder xqc" class="flex-1 px-6 py-4 bg-twitch-darker border border-purple-600 rounded-xl focus:outline-none focus:border-twitch-purple text-lg">
         <button onclick="fetchData()" class="px-12 py-4 bg-twitch-purple rounded-xl hover:bg-purple-700 transition font-bold text-lg">Laden</button>
       </div>
 
@@ -57,10 +77,10 @@
   </div>
 
   <script>
-    const API_BASE = 'https://twatch-62vd.onrender.com'; // ← Deine Backend-URL
+    const API_BASE = 'https://twatch-62vd.onrender.com'; // ← DEINE BACKEND-URL
 
-    // Dark/Light Toggle (falls du den Button hast)
-    document.getElementById('theme-toggle')?.addEventListener('click', () => {
+    // Dark/Light Toggle
+    document.getElementById('theme-toggle').addEventListener('click', () => {
       document.documentElement.classList.toggle('dark');
       document.getElementById('theme-toggle').textContent = document.documentElement.classList.contains('dark') ? 'Light Mode' : 'Dark Mode';
     });
@@ -88,7 +108,8 @@
     async function fetchData() {
       const username = document.getElementById('usernameInput').value.trim().toLowerCase();
       if (!username) {
-        showError('Bitte Username eingeben.');
+        document.getElementById('error').textContent = 'Bitte Username eingeben.';
+        document.getElementById('error').style.display = 'block';
         return;
       }
 
@@ -101,21 +122,22 @@
       results.innerHTML = '';
 
       try {
-        // Hole aktuelle Hashes vom Backend
+        // Hole Hashes vom Backend
         const hashRes = await fetch(`${API_BASE}/api/hashes`);
-        if (!hashRes.ok) throw new Error('Backend nicht erreichbar');
+        if (!hashRes.ok) throw new Error(`Backend-Fehler: ${hashRes.status}`);
         const hashes = await hashRes.json();
 
         let data = [];
         if (window.currentTool === 'follows') {
           data = await fetchFollows(username, hashes);
         } else {
+          // Hole User-ID vom Backend
           const userRes = await fetch(`${API_BASE}/api/userid`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ login: username })
           });
-          if (!userRes.ok) throw new Error('Backend-Fehler');
+          if (!userRes.ok) throw new Error(`User-ID Fehler: ${userRes.status}`);
           const userData = await userRes.json();
           if (!userData.userId) throw new Error('User nicht gefunden');
 
@@ -131,7 +153,7 @@
       }
     }
 
-    // Follows (nutzt Backend-Hash)
+    // Follows
     async function fetchFollows(login, hashes) {
       let all = [];
       let cursor = null;
@@ -139,7 +161,7 @@
         const query = {
           operationName: "Followers",
           variables: { limit: 100, login, order: "DESC", after: cursor },
-          extensions: { persistedQuery: { version: 1, sha256Hash: hashes.followersHash || "3316194bb52051e2f9184012f6171b9aed4d457994568f1b4ed4a11e37a18b5c" } }
+          extensions: { persistedQuery: { version: 1, sha256Hash: hashes.followersHash } }
         };
 
         const res = await fetch('https://gql.twitch.tv/gql', {
@@ -161,14 +183,14 @@
       return all;
     }
 
-    // Mods / VIPs / Founders (nutzt Backend-Hash)
+    // Mods / VIPs / Founders
     async function fetchList(tool, userId, hashes) {
-      const operationMap = {
+      const opMap = {
         mods: { name: "ModerationModerators", hash: hashes.moderationModerators },
         vips: { name: "ChannelVIPs", hash: hashes.channelVIPs },
         founders: { name: "ChannelFounders", hash: hashes.channelFounders }
       };
-      const op = operationMap[tool];
+      const op = opMap[tool];
 
       const query = {
         operationName: op.name,
